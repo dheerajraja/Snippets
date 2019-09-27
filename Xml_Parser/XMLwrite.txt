@@ -1,0 +1,30 @@
+<route>
+  <waypoint>
+    <name>Berlin</name>
+    <latitude>52.5166</latitude>
+    <longitude>57</longitude>
+  </waypoint>
+  <waypoint>
+    <name>Eberstadt</name>
+    <latitude>49.1804</latitude>
+    <longitude>8.48394</longitude>
+  </waypoint>
+  <poi>
+    <name>Bodyculture</name>
+    <latitude>10.12</latitude>
+    <longitude>52.15</longitude>
+    <type>Restaurant</type>
+    <description>This Happens to be the best fitness centre
+    in Darmstadt.    
+    Be fit! Be healthy! Be Happy!
+    Sweat it out!!</description>
+  </poi>
+  <poi>
+    <name>Mensa</name>
+    <latitude>49.4696</latitude>
+    <longitude>8.48394</longitude>
+    <type>Restaurant</type>
+    <description>saltless food
+    But good for health</description>
+  </poi>
+</route>

@@ -1,0 +1,26 @@
+<route>
+  <waypoint>
+  <name>Darmstadt</name>
+  <latitude>49.87275</latitude>
+  <longitude>8.65103</longitude>
+  </waypoint>
+  <poi>
+  <name>Mensa HDA</name>
+  <description>The best Mensa in the world</description>
+  <type>Restaurant</type>
+  <latitude>49.65</latitude>
+  <longitude>8.3527</longitude>
+  </poi>
+    <waypoint>
+  <name>Eberstadt</name>
+  <latitude>49.1804</latitude>
+  <longitude>8.48394</longitude>
+  </waypoint>
+  <poi>
+  <name>Bodyculture</name>
+  <description>This Happens to be the best fitness centre in Darmstadt.</description>
+  <type>Fitnesstudio</type>
+  <latitude>10.12</latitude>
+  <longitude>52.15</longitude>
+  </poi>
+</route>

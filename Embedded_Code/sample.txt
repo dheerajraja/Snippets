@@ -1,0 +1,135 @@
+/**
+ * Verify device matching cful version.
+ *
+ * \param[in] signed_manifest Signed manifest
+ *
+ * \retval FUFU_InternalError When upgradable cful version does not matching
+ * \retval FUFU_NoError On success
+ */
+static FUFU_ReturnCode check_device_matching_cful_version(CFUL_COSE_Sign *signed_manifest)
+{
+	FUFU_ReturnCode ret;
+
+	CFULM_VersionInfo cful_version_info;
+
+	for (uint32_t cfulVersionItems = 0; cfulVersionItems < signed_manifest->payload.preConditions.item1.parameters.keyCfulVersion_items; cfulVersionItems++)
+	{
+		// Decode the upgradable cful_version_info from manifest
+		check_call(decode_CFULM_VersionInfo(&signed_manifest->payload.preConditions.item1.parameters.keyCfulVersion, &cful_version_info));
+
+		// Compare whether we have the right cful version which can be upgradable
+		if (((!cful_version_info.major_notnil) || (cful_version_info.major == (uint16_t)CFUL_VERSION_MAJOR)) && ((!cful_version_info.minor_notnil) || (cful_version_info.minor == (uint16_t)CFUL_VERSION_MINOR)) && ((!cful_version_info.build_notnil) || (cful_version_info.build == (uint32_t)CFUL_VERSION_BUILD)) && ((!cful_version_info.certStatus_notnil) || (cful_version_info.certStatus == (uint8_t)CFUL_VERSION_CC_STATE)))
+		{
+			raise(FUFU_NoError);
+		}
+	}
+
+	ret = FUFU_InternalError;
+exit:
+	return ret;
+}
+
+/**
+ * Verify device matching chip identification.
+ *
+ * \param[in] signed_manifest Signed manifest
+ *
+ * \retval FUFU_InternalError When os call failed or upgradable chip identification does not matching
+ * \retval FUFU_NoError On success
+ */
+static FUFU_ReturnCode check_device_matching_chip_ident(CFUL_COSE_Sign *signed_manifest)
+{
+	FUFU_ReturnCode ret;
+
+	CFULM_ChipIdent chipIdent;
+
+	// Get the current chip information from the OsLib
+	sChipIdent_d chip_ident_current;
+
+	check_raise_convert(OS_CFUL_GetChipInfo(&chip_ident_current), IFX_SEC_OS_SUCCESS, FUFU_InternalError);
+
+	for (uint32_t chipIdentItems = 0; chipIdentItems < signed_manifest->payload.preConditions.item1.parameters.keyChipIdent_items; chipIdentItems++)
+	{
+		// Decode the upgradable product_version_info from manifest
+		check_call(decode_CFULM_ChipIdent(&signed_manifest->payload.preConditions.item1.parameters.keyChipIdent, &chipIdent));
+
+		// Compare whether we have the right Chip Ident which can be upgradable
+		if (((!chipIdent.chipType_notnil) || (memcmp(chipIdent.chipType_data, chip_ident_current.rgbChipType, chipIdent.chipType_length) == 0)) && ((!chipIdent.designStep_notnil) || (memcmp(chipIdent.designStep_data, chip_ident_current.rgbDesignStep, chipIdent.designStep_length) == 0)) && ((!chipIdent.fwVersion_notnil) || (memcmp(chipIdent.fwVersion_data, chip_ident_current.rgbFirmwareIdentifier, chipIdent.fwVersion_length) == 0)))
+		{
+			raise(FUFU_NoError);
+		}
+	}
+
+	ret = FUFU_InternalError;
+exit:
+	return ret;
+}
+
+/**
+ * Verify device matching product version.
+ *
+ * \param[in] signed_manifest Signed manifest
+ *
+ * \retval FUFU_InternalError When os call failed or upgradable product version does not matching
+ * \retval FUFU_NoError On success
+ */
+static FUFU_ReturnCode check_device_matching_product_version(CFUL_COSE_Sign *signed_manifest)
+{
+	FUFU_ReturnCode ret;
+
+	CFULM_VersionInfo version_info;
+
+	// Get the current product version info from the CFUL_Datastore which is present now
+	// ToDo: contents in CFUL_Datastore has to be removes when we actually hardcode the firmware version information
+	FUFU_ProductVersionOnChip product_version_on_chip;
+
+	check_raise_convert(OS_DataStore_Read(&product_version_on_chip, DATASTORE_FIRMWARE_VERSION_ID, 0, sizeof(product_version_on_chip), 0), IFX_SEC_OS_SUCCESS, FUFU_InternalError);
+
+	for (uint32_t number_of_upgradable_product_version = 0; number_of_upgradable_product_version < signed_manifest->payload.preConditions.item1.parameters.keyProductVersion_items; number_of_upgradable_product_version++)
+	{
+		// Decode the upgradable product_version_info from manifest
+		check_call(decode_CFULM_VersionInfo(&signed_manifest->payload.preConditions.item1.parameters.keyProductVersion, &version_info));
+
+		// Compare whether we have the right product version which can be upgradable
+		if (((!version_info.major_notnil) || (version_info.major == product_version_on_chip.version_major)) && ((!version_info.minor_notnil) || (version_info.minor == product_version_on_chip.version_minor)) && ((!version_info.build_notnil) || (version_info.build == product_version_on_chip.version_build)) && ((!version_info.certStatus_notnil) || (version_info.certStatus == product_version_on_chip.version_cc_state)))
+		{
+			raise(FUFU_NoError);
+		}
+	}
+
+	ret = FUFU_InternalError;
+exit:
+	return ret;
+}
+
+/**
+ * Verify that chip and SW version match upgrade package.
+ *
+ * \param[in] signed_manifest Signed manifest
+ *
+ * \retval FUFU_InternalError When os call failed or upgradable device matching artifacts does not matching
+ * \retval FUFU_NoError On success
+ */
+static FUFU_ReturnCode check_device_matching(CFUL_COSE_Sign *signed_manifest)
+{
+	FUFU_ReturnCode ret;
+
+	if (signed_manifest->payload.preConditions.item1.parameters.keyProductVersion_present)
+	{
+		check_call(check_device_matching_product_version(signed_manifest));
+	}
+
+	if (signed_manifest->payload.preConditions.item1.parameters.keyChipIdent_present)
+	{
+		check_call(check_device_matching_chip_ident(signed_manifest));
+	}
+
+	if (signed_manifest->payload.preConditions.item1.parameters.keyCfulVersion_present)
+	{
+		check_call(check_device_matching_cful_version(signed_manifest));
+	}
+
+	ret = FUFU_NoError;
+exit:
+	return ret;
+}
